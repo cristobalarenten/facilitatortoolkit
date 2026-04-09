@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Show, Don't Tell — Facilitator Toolkit</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #000F41;
+    color: #fff;
+    min-height: 100vh;
+  }
+  .nav {
+    display: flex; align-items: center; padding: 0 32px; height: 56px;
+    background: rgba(0,0,0,0.25); border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .nav-brand { font-size: 13px; font-weight: 700; letter-spacing: 2px; opacity: 0.5; margin-right: 40px; }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 10px 24px; border-radius: 8px 8px 0 0; border: none;
+    background: transparent; color: rgba(255,255,255,0.45);
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s;
+  }
+  .nav-tab:hover { color: rgba(255,255,255,0.75); }
+  .nav-tab.active { background: #000F41; color: #1F9DFF; border-bottom: 2px solid #1F9DFF; }
+
+  .panel { display: none; }
+  .panel.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 56px); padding: 20px; }
+
+  /* TIMER */
+  .timer-display {
+    font-size: min(26vw, 220px); font-weight: 700; font-variant-numeric: tabular-nums;
+    letter-spacing: -4px; line-height: 1; margin-bottom: 8px; transition: color 0.3s;
+    color: #fff;
+  }
+  .timer-display.warning { color: #E68A00; }
+  .timer-display.danger { color: #CC3333; animation: pulse 1s infinite; }
+  .timer-display.done { color: #CC3333; animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .timer-status { font-size: 18px; opacity: 0.6; margin-bottom: 32px; letter-spacing: 1px; text-transform: uppercase; }
+
+  .presets { display: flex; gap: 12px; margin-bottom: 24px; }
+  .preset-btn {
+    padding: 10px 22px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+    background: transparent; color: rgba(255,255,255,0.7);
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s;
+  }
+  .preset-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .preset-btn.active { background: #0303B8; color: #fff; border-color: #0303B8; }
+
+  .controls { display: flex; gap: 12px; }
+  .ctrl-btn {
+    padding: 14px 36px; border-radius: 8px; border: none;
+    font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+    letter-spacing: 1px; transition: all 0.2s; min-width: 120px;
+  }
+  .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-start { background: #1F9DFF; color: #fff; }
+  .btn-start:hover:not(:disabled) { background: #0303B8; }
+  .btn-pause { background: #E68A00; color: #fff; }
+  .btn-reset { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+  .btn-reset:hover { background: rgba(255,255,255,0.15); }
+
+  .hint { margin-top: 28px; font-size: 12px; opacity: 0.4; letter-spacing: 0.5px; }
+
+  /* RANDOM ORDER */
+  .random-container { width: 100%; max-width: 1100px; }
+  .spotlight {
+    background: linear-gradient(135deg, #0303B8 0%, #1F9DFF 100%);
+    border-radius: 16px; padding: 48px 32px; text-align: center; margin-bottom: 24px;
+    box-shadow: 0 20px 60px rgba(3,3,184,0.3);
+  }
+  .spot-label { font-size: 12px; letter-spacing: 3px; opacity: 0.75; margin-bottom: 12px; }
+  .spot-emoji { font-size: 96px; line-height: 1; margin-bottom: 16px; }
+  .spot-name { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  .spot-counter { font-size: 14px; opacity: 0.7; letter-spacing: 1px; }
+  .spot-waiting { font-size: 22px; opacity: 0.85; line-height: 1.5; }
+  .spot-done { font-size: 22px; font-weight: 600; }
+
+  .actions { display: flex; justify-content: center; gap: 12px; margin-bottom: 32px; }
+  .abtn {
+    padding: 14px 32px; border-radius: 8px; border: none;
+    font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+    letter-spacing: 1px; transition: all 0.2s;
+  }
+  .abtn-pick { background: #1F9DFF; color: #fff; }
+  .abtn-pick:hover { background: #0303B8; }
+  .abtn-done { background: #0303B8; color: #fff; }
+  .abtn-done:hover { background: #1F9DFF; }
+  .abtn-reset { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+  .abtn-reset:hover { background: rgba(255,255,255,0.15); }
+
+  .lists { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .list-box {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 20px; min-height: 200px;
+  }
+  .list-title { font-size: 11px; letter-spacing: 2px; opacity: 0.5; margin-bottom: 12px; text-transform: uppercase; }
+  .list-items { display: flex; flex-direction: column; gap: 6px; }
+  .list-item {
+    display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+    background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 14px;
+  }
+  .list-item .emoji { font-size: 20px; }
+  .list-item.done { opacity: 0.45; text-decoration: line-through; }
+
+  /* EDIT */
+  .edit-section { margin-top: 32px; width: 100%; max-width: 700px; }
+  .edit-toggle {
+    background: transparent; color: rgba(255,255,255,0.45); border: none;
+    font-size: 12px; cursor: pointer; font-family: inherit; padding: 6px;
+  }
+  .edit-toggle:hover { color: #fff; }
+  .edit-panel { display: none; margin-top: 12px; }
+  .edit-panel.open { display: block; }
+  .edit-panel textarea {
+    width: 100%; height: 220px; background: rgba(0,0,0,0.3); color: #fff;
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px;
+    font-family: 'Consolas', monospace; font-size: 13px; resize: vertical;
+  }
+  .edit-panel .edit-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .edit-panel .edit-hint { font-size: 11px; opacity: 0.5; margin-top: 6px; }
+
+  .footer {
+    position: fixed; bottom: 8px; right: 16px;
+    font-size: 10px; letter-spacing: 2px; opacity: 0.3;
+  }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-brand">SHOW, DON'T TELL</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPanel('timer', this)">⏱ Timer</button>
+    <button class="nav-tab" onclick="showPanel('random', this)">🎲 Random Order</button>
+  </div>
+</div>
+
+<!-- TIMER PANEL -->
+<div id="panel-timer" class="panel active">
+  <div id="timerDisplay" class="timer-display">8:00</div>
+  <div id="timerStatus" class="timer-status">Ready</div>
+
+  <div class="presets">
+    <button class="preset-btn" onclick="setPreset(1, this)">1 min</button>
+    <button class="preset-btn active" onclick="setPreset(8, this)">8 min · Writing</button>
+    <button class="preset-btn" onclick="setPreset(3, this)">3 min · Presenting</button>
+    <button class="preset-btn" onclick="setPreset(10, this)">10 min</button>
+  </div>
+
+  <div class="controls">
+    <button id="btnStart" class="ctrl-btn btn-start" onclick="timerStart()">START</button>
+    <button id="btnPause" class="ctrl-btn btn-pause" onclick="timerPause()" disabled>PAUSE</button>
+    <button class="ctrl-btn btn-reset" onclick="timerReset()">RESET</button>
+  </div>
+
+  <div class="hint">Space = start/pause · R = reset · F11 = fullscreen</div>
+</div>
+
+<!-- RANDOM ORDER PANEL -->
+<div id="panel-random" class="panel">
+  <div class="random-container">
+    <div id="spotlight" class="spotlight">
+      <div class="spot-waiting">Click PICK NEXT to reveal the first presenter</div>
+    </div>
+
+    <div id="actions" class="actions">
+      <button class="abtn abtn-pick" onclick="pickNext()">🎲 PICK NEXT</button>
+      <button id="btnResetSession" class="abtn abtn-reset" onclick="resetSession()">RESET SESSION</button>
+    </div>
+
+    <div class="lists">
+      <div class="list-box">
+        <div class="list-title">In the Hat</div>
+        <div id="poolList" class="list-items"></div>
+      </div>
+      <div class="list-box">
+        <div class="list-title">Presented</div>
+        <div id="doneList" class="list-items"></div>
+      </div>
+    </div>
+
+    <div class="edit-section">
+      <button class="edit-toggle" onclick="toggleEdit()">✏️ Edit team members</button>
+      <div id="editPanel" class="edit-panel">
+        <textarea id="teamEditor"></textarea>
+        <div class="edit-actions">
+          <button class="abtn abtn-done" onclick="saveTeam()">Save & Restart</button>
+          <button class="abtn abtn-reset" onclick="toggleEdit()">Cancel</button>
+        </div>
+        <div class="edit-hint">One per line: emoji [tab or space] name (e.g. 🦊 Anders Reske-Nielsen — Connectivity)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">NPE DIGITAL UNIT | FACILITATOR TOOLKIT</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DEFAULT TEAM — NPE Digital Unit (April 2026)
+// Synced with Portfolio Scoreboard
+// ═══════════════════════════════════════════════
+const DEFAULT_TEAM = [
+  { emoji: '🦘', name: 'David Camacho — Project & Automation Excellence' },
+  { emoji: '🦊', name: 'Anders Reske-Nielsen — Connectivity (KPIs + IIoT)' },
+  { emoji: '🐺', name: 'Christer Utzen — OptiPartner' },
+  { emoji: '🦁', name: 'John Healy — Codex' },
+  { emoji: '🐻', name: 'Lasse Glibstrup — Cloud & On-Premise / S14' },
+  { emoji: '🦅', name: 'Fernando Marques — Digital Portfolio Performance' },
+  { emoji: '🐬', name: 'Cristobal Arentsen — Digital NamePlate / Passport' },
+  { emoji: '🦉', name: 'Javier Bracicorto — GEA Portal & eCatalog' },
+  { emoji: '🐎', name: 'Mo Tanveer — GEA RemotePartner' },
+  { emoji: '🐆', name: 'Javier Gonzalez — Digital Sales Overview' },
+  { emoji: '🦈', name: 'Luis Briones — GEA AHEAD (AI Program)' },
+  { emoji: '🐙', name: 'Jorge Chavero — Digital Enablement Program' }
+];
+
+let team = [...DEFAULT_TEAM];
+let pool = [];
+let done = [];
+let current = null;
+
+// ═══════════ PANEL SWITCHING ═══════════
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════ TIMER ═══════════
+let totalSec = 480, remainSec = 480, tInt = null, tRunning = false;
+const fmt = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+
+function updateTimer() {
+  const el = document.getElementById('timerDisplay');
+  const st = document.getElementById('timerStatus');
+  el.textContent = fmt(remainSec);
+  el.className = 'timer-display';
+  if (remainSec === 0) {
+    el.classList.add('done');
+    st.textContent = "Time's up!";
+    clearInterval(tInt);
+    tRunning = false;
+    document.getElementById('btnStart').disabled = true;
+    document.getElementById('btnPause').disabled = true;
+    document.title = "⏰ TIME'S UP";
+    playBeep();
+  } else if (remainSec <= 15) {
+    el.classList.add('danger');
+    st.textContent = "Final seconds...";
+  } else if (remainSec <= 60) {
+    el.classList.add('warning');
+    st.textContent = "1 minute remaining";
+  } else if (tRunning) {
+    st.textContent = "Running...";
+  }
+  if (tRunning) document.title = fmt(remainSec) + ' — Timer';
+}
+
+function timerStart() {
+  if (tRunning) return;
+  tRunning = true;
+  document.getElementById('btnStart').disabled = true;
+  document.getElementById('btnPause').disabled = false;
+  tInt = setInterval(() => { remainSec--; updateTimer(); }, 1000);
+  updateTimer();
+}
+
+function timerPause() {
+  if (!tRunning) return;
+  tRunning = false;
+  clearInterval(tInt);
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnPause').disabled = true;
+  document.getElementById('timerStatus').textContent = 'Paused';
+}
+
+function timerReset() {
+  tRunning = false;
+  clearInterval(tInt);
+  remainSec = totalSec;
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnPause').disabled = true;
+  document.getElementById('timerStatus').textContent = 'Ready';
+  document.title = "Show, Don't Tell — Facilitator Toolkit";
+  updateTimer();
+}
+
+function setPreset(m, b) {
+  totalSec = m * 60;
+  remainSec = totalSec;
+  document.querySelectorAll('.preset-btn').forEach(x => x.classList.remove('active'));
+  if (b) b.classList.add('active');
+  timerReset();
+}
+
+function playBeep() {
+  try {
+    const c = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.3, 0.6].forEach(d => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.connect(g);
+      g.connect(c.destination);
+      o.frequency.value = d === 0.6 ? 600 : 800;
+      g.gain.value = 0.2;
+      o.start(c.currentTime + d);
+      o.stop(c.currentTime + d + 0.18);
+    });
+  } catch (e) {}
+}
+
+// ═══════════ RANDOM ORDER ═══════════
+function initSession() {
+  pool = [...team];
+  done = [];
+  current = null;
+  render();
+}
+
+function pickNext() {
+  if (current) {
+    done.push(current);
+    current = null;
+  }
+  if (pool.length === 0) {
+    render();
+    return;
+  }
+  const idx = Math.floor(Math.random() * pool.length);
+  current = pool.splice(idx, 1)[0];
+  render();
+}
+
+let resetConfirmTimer = null;
+function resetSession() {
+  const btn = document.getElementById('btnResetSession');
+  if (resetConfirmTimer) {
+    // Second click within 3 seconds → actually reset
+    clearTimeout(resetConfirmTimer);
+    resetConfirmTimer = null;
+    btn.textContent = 'RESET SESSION';
+    btn.style.background = '';
+    btn.style.color = '';
+    initSession();
+    return;
+  }
+  // First click → ask for confirmation
+  btn.textContent = 'CLICK AGAIN TO CONFIRM';
+  btn.style.background = '#CC3333';
+  btn.style.color = '#fff';
+  resetConfirmTimer = setTimeout(() => {
+    btn.textContent = 'RESET SESSION';
+    btn.style.background = '';
+    btn.style.color = '';
+    resetConfirmTimer = null;
+  }, 3000);
+}
+
+function render() {
+  const spot = document.getElementById('spotlight');
+  if (current) {
+    spot.innerHTML = `
+      <div class="spot-label">NOW PRESENTING</div>
+      <div class="spot-emoji">${current.emoji}</div>
+      <div class="spot-name">${current.name}</div>
+      <div class="spot-counter">#${done.length + 1} of ${team.length}</div>
+    `;
+  } else if (done.length === team.length && team.length > 0) {
+    spot.innerHTML = `<div class="spot-done">✓ All ${team.length} presenters done</div>`;
+  } else if (done.length > 0) {
+    spot.innerHTML = `<div class="spot-waiting">Click PICK NEXT for presenter #${done.length + 1}</div>`;
+  } else {
+    spot.innerHTML = `<div class="spot-waiting">Click PICK NEXT to reveal the first presenter</div>`;
+  }
+
+  const poolEl = document.getElementById('poolList');
+  poolEl.innerHTML = pool.map(p =>
+    `<div class="list-item"><span class="emoji">${p.emoji}</span><span>${p.name}</span></div>`
+  ).join('') || '<div style="opacity:0.4;font-size:13px;padding:8px 12px;">Empty</div>';
+
+  const doneEl = document.getElementById('doneList');
+  doneEl.innerHTML = done.map((p, i) =>
+    `<div class="list-item done"><span class="emoji">${p.emoji}</span><span>${i + 1}. ${p.name}</span></div>`
+  ).join('') || '<div style="opacity:0.4;font-size:13px;padding:8px 12px;">No one yet</div>';
+}
+
+// ═══════════ EDIT TEAM ═══════════
+function toggleEdit() {
+  const panel = document.getElementById('editPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    document.getElementById('teamEditor').value =
+      team.map(p => `${p.emoji}\t${p.name}`).join('\n');
+  }
+}
+
+function saveTeam() {
+  const raw = document.getElementById('teamEditor').value.trim();
+  const lines = raw.split('\n').filter(l => l.trim());
+  const newTeam = lines.map(line => {
+    const parts = line.split(/\s+/);
+    const emoji = parts[0];
+    const name = parts.slice(1).join(' ');
+    return { emoji, name };
+  }).filter(p => p.name);
+  if (newTeam.length === 0) {
+    alert('Team cannot be empty');
+    return;
+  }
+  team = newTeam;
+  initSession();
+  toggleEdit();
+}
+
+// ═══════════ KEYBOARD ═══════════
+document.addEventListener('keydown', e => {
+  if (document.activeElement.tagName === 'TEXTAREA') return;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (document.getElementById('panel-timer').classList.contains('active')) {
+      tRunning ? timerPause() : timerStart();
+    }
+  }
+  if (e.code === 'KeyR') {
+    if (document.getElementById('panel-timer').classList.contains('active')) {
+      timerReset();
+    }
+  }
+});
+
+// ═══════════ INIT ═══════════
+initSession();
+updateTimer();
+</script>
+</body>
+</html>
